@@ -1,6 +1,10 @@
 # Data
 /data/
 
+# Large raw EEG data folder
+# Ignore the root-level folder named "EDF filer" (contains >4GB of EDF files)
+/EDF filer/
+
 # Mac OS-specific storage files
 .DS_Store
 
