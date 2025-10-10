@@ -5,6 +5,9 @@
 # Ignore the root-level folder named "EDF filer" (contains >4GB of EDF files)
 /EDF filer/
 
+# VS Code
+.vscode/
+
 # Mac OS-specific storage files
 .DS_Store
 
