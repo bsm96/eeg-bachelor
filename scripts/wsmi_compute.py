@@ -11,8 +11,8 @@ import mne  # EEG I/O, filtering, epochs
 from tqdm import tqdm  # progress bar for long epoch loops
 
 # Project imports (our modules)
-from eeg_old.wsmi.filters import bandpass_epochs  # filtering via MNE backend
-from eeg_old.wsmi.compute import compute_wsmi_matrix  # our NumPy wSMI implementation
+from eeg.wsmi.filters import bandpass_epochs  # filtering via MNE backend
+from eeg.wsmi.compute import compute_wsmi_matrix  # our NumPy wSMI implementation
 
 
 def _parse_notch_list(s: Optional[str]) -> Optional[List[float]]:
