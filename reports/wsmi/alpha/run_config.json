@@ -1,0 +1,23 @@
+{
+  "epochs_path": "\\\\regionh.top.local\\dfs\\Logget\\AuditData\\CONNECT-ME\\Bjoern\\eeg-bachelor\\data\\epochs\\window16s_stride1s\\patient2_window16s_stride1s-epo.fif",
+  "output_dir": "\\\\regionh.top.local\\dfs\\Logget\\AuditData\\CONNECT-ME\\Bjoern\\eeg-bachelor\\reports\\wsmi\\alpha",
+  "sfreq": 250.0,
+  "l_freq": 8.0,
+  "h_freq": 12.0,
+  "use_notch": false,
+  "notch_freqs": null,
+  "k": 3,
+  "tau": 8,
+  "tie_break": "jitter",
+  "normalize": true,
+  "skip_filter": false,
+  "picks": "eeg",
+  "save_symbols": false,
+  "n_epochs": 4563,
+  "n_channels": 19,
+  "library_notes": {
+    "numpy": "Also used by C&K, Engemann, Della Bella",
+    "mne": "Also used by C&K, Engemann, Della Bella",
+    "tqdm": "Additional helper for progress; improves UX on long runs"
+  }
+}

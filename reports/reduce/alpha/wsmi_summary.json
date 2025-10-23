@@ -1,0 +1,10 @@
+{
+  "subject_id": "patient2",
+  "band": "alpha",
+  "strategy": "median-trim",
+  "include_diagonal": false,
+  "trim_proportion": 0.1,
+  "subject_scalar": -0.003298051629471138,
+  "n_epochs": 4563,
+  "n_channels": 19
+}
