@@ -107,11 +107,6 @@ def main() -> None:
         "include_diagonal": bool(args.include_diagonal),
         "subject_id": args.subject_id,
         "band": args.band,
-        "library_notes": {
-            "numpy": "Also used by C&K, Engemann, Della Bella",
-            "pandas": "Common in MNE-style analysis stacks",
-            "scipy": "Used inside eeg.wsmi.aggregation for trimmed mean",
-        },
     }
     with open(outdir / "run_config.json", "w", encoding="utf-8") as f:  # open run_config file
         json.dump(run_config, f, indent=2)  # write run_config
