@@ -1,60 +1,69 @@
 #!/usr/bin/env python3
 from __future__ import annotations  # future-compatible annotations
+
+# --- Make src/ importable without setting PYTHONPATH ---
+import sys  # add src/ to sys.path so 'eeg' package is importable
+from pathlib import Path  # robust path handling
+
+ROOT = Path(__file__).resolve().parents[1]  # project root folder
+SRC = ROOT / "src"  # src/ folder that contains the 'eeg' package
+if str(SRC) not in sys.path:  # ensure src/ is visible to this process
+    sys.path.insert(0, str(SRC))  # prepend src path
+
+# --- Standard imports ---
 import argparse  # CLI parsing
-import json  # write a run_config snapshot for reproducibility
-from pathlib import Path  # path utilities from the standard library
-from typing import Optional  # precise type hints
+import json  # write run_config and summary
+from typing import Optional  # typing helpers
 
 import numpy as np
 import pandas as pd  # tabular I/O
 
-# Our project aggregation utilities (SciPy-based trimmed mean is used inside this module)
-from eeg_old.wsmi.aggregation import (  # local module with tested reducers
-    aggregate_wsmi_matrices,        # runs pairwise + temporal reduction
-    aggregator_from_string,         # maps a strategy string to reducer choices
+# Project imports (our modules)
+from eeg.wsmi.aggregation import (  # our reducers; SciPy trimmed mean used inside
+    aggregate_wsmi_matrices,
+    aggregator_from_string,
 )
 
 
 def _ensure_outdir(path: str | Path) -> Path:
-    outdir = Path(path)  # turn input into a Path object
-    outdir.mkdir(parents=True, exist_ok=True)  # create directory tree if it does not exist
-    return outdir  # return Path for downstream calls
+    outdir = Path(path)  # cast to Path
+    outdir.mkdir(parents=True, exist_ok=True)  # create directory tree if missing
+    return outdir  # return Path object
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Reduce per-epoch wSMI matrices to scalars (mean/median/trimmed).")
-    ap.add_argument("--wsmi-npz", required=True, help="Path to NPZ produced by wsmi_compute.py (contains Ws).")
-    ap.add_argument("--out", required=True, help="Output directory for CSV/JSON results.")
+    ap = argparse.ArgumentParser(description="Reduce per-epoch wSMI matrices to scalars (mean/median/trimmed).")  # CLI help text
+    ap.add_argument("--wsmi-npz", required=True, help="Path to NPZ produced by wsmi_compute.py (contains Ws).")  # NPZ path
+    ap.add_argument("--out", required=True, help="Output directory for CSV/JSON results.")  # output dir
     ap.add_argument("--strategy", required=True,
-                    help="Aggregation strategy, e.g., 'mean-mean', 'median-mean', 'median-median', 'mean-trim', 'median-trim'.")
+                    help="One of: 'mean-mean', 'median-mean', 'median-median', 'mean-trim', 'median-trim'.")  # strategy
     ap.add_argument("--trim-proportion", type=float, default=None,
-                    help="Trim fraction per tail (required when strategy implies trimmed mean).")
+                    help="Trim fraction per tail when using a '...-trim' strategy.")  # trim arg
     ap.add_argument("--include-diagonal", action="store_true",
-                    help="Include diagonal entries when reducing over pairs (default excludes diagonal).")
+                    help="Include diagonal entries when reducing over pairs.")  # include diag flag
     ap.add_argument("--subject-id", type=str, default=None,
-                    help="Optional subject identifier to include in outputs (provided externally).")
+                    help="Optional subject identifier for outputs.")  # subject id
     ap.add_argument("--band", type=str, default=None,
-                    help="Optional band label to include in outputs (provided externally).")
-    args = ap.parse_args()  # parse CLI arguments into a namespace
+                    help="Optional band label for outputs.")  # band label
+    args = ap.parse_args()  # parse CLI
 
-    outdir = _ensure_outdir(args.out)  # ensure the output directory exists
+    outdir = _ensure_outdir(args.out)  # ensure output dir exists
 
-    npz_path = Path(args.wsmi_npz)  # create a Path handle for the NPZ input
-    if not npz_path.exists():  # validate that the input file is present
-        raise FileNotFoundError(f"File not found: {npz_path}")  # explicit error for missing input
+    npz_path = Path(args.wsmi_npz)  # convert to Path
+    if not npz_path.exists():  # check file presence
+        raise FileNotFoundError(f"File not found: {npz_path}")  # explicit error
 
-    with np.load(npz_path, allow_pickle=True) as npz:  # open the NPZ bundle created by wsmi_compute.py
-        if "Ws" not in npz.files:  # verify expected array key exists
-            raise KeyError("Input NPZ must contain key 'Ws' (array of wSMI matrices).")  # explicit schema error
-        Ws = npz["Ws"]  # load 3D array of shape (n_epochs, n_channels, n_channels)
-        ch_names = npz.get("ch_names", None)  # load optional channel names metadata
-        # symbols may be present but are not needed for aggregation; intentionally ignored here
+    with np.load(npz_path, allow_pickle=True) as npz:  # open NPZ bundle
+        if "Ws" not in npz.files:  # schema check
+            raise KeyError("Input NPZ must contain key 'Ws'.")  # explicit schema error
+        Ws = npz["Ws"]  # (n_epochs, n_channels, n_channels)
+        ch_names = npz.get("ch_names", None)  # optional metadata (not used further here)
 
-    pair_reducer, time_reducer, trim_prop = aggregator_from_string(  # resolve reducer choices from strategy name
+    pair_reducer, time_reducer, trim_prop = aggregator_from_string(  # resolve reducers
         args.strategy, proportion_to_cut=args.trim_proportion
     )
 
-    epoch_scalars, subject_scalar = aggregate_wsmi_matrices(  # run aggregation on all epoch matrices
+    epoch_scalars, subject_scalar = aggregate_wsmi_matrices(  # reduce matrices → per-epoch + final scalar
         Ws,
         pair_reducer=pair_reducer,
         time_reducer=time_reducer,
@@ -62,22 +71,19 @@ def main() -> None:
         include_diagonal=bool(args.include_diagonal),
     )
 
-    # Build a DataFrame for the per-epoch series to simplify downstream QC/plots
-    df_epochs = pd.DataFrame({  # assemble per-epoch results in a tidy table
-        "epoch_index": np.arange(len(epoch_scalars), dtype=int),  # explicit epoch indices
-        "wsmi_scalar": np.asarray(epoch_scalars, dtype=float),    # per-epoch scalar values
+    # Per-epoch CSV (good for QC)
+    df_epochs = pd.DataFrame({  # build tidy table
+        "epoch_index": np.arange(len(epoch_scalars), dtype=int),  # epoch indices
+        "wsmi_scalar": np.asarray(epoch_scalars, dtype=float),    # scalar per epoch
     })
-    if args.subject_id is not None:  # optionally annotate subject identifier
-        df_epochs["subject_id"] = args.subject_id  # broadcast the provided subject id into the table
-    if args.band is not None:  # optionally annotate band label
-        df_epochs["band"] = args.band  # broadcast the provided band label into the table
+    if args.subject_id is not None:  # optional subject label
+        df_epochs["subject_id"] = args.subject_id  # annotate column
+    if args.band is not None:  # optional band label
+        df_epochs["band"] = args.band  # annotate column
+    df_epochs.to_csv(outdir / "wsmi_epoch_scalars.csv", index=False)  # write CSV
 
-    # Save per-epoch series
-    epochs_csv = outdir / "wsmi_epoch_scalars.csv"  # construct an output path for epoch series
-    df_epochs.to_csv(epochs_csv, index=False)  # write CSV without index for clean consumption
-
-    # Save a compact JSON summary with the final subject-level scalar
-    summary = {  # create a plain dictionary for the subject-level scalar
+    # Compact JSON summary with final subject-level scalar
+    summary = {  # dictionary of summary info
         "subject_id": args.subject_id,
         "band": args.band,
         "strategy": args.strategy,
@@ -87,11 +93,11 @@ def main() -> None:
         "n_epochs": int(Ws.shape[0]),
         "n_channels": int(Ws.shape[1]) if Ws.ndim == 3 else None,
     }
-    with open(outdir / "wsmi_summary.json", "w", encoding="utf-8") as f:  # open a JSON file for writing
-        json.dump(summary, f, indent=2)  # store subject-level result with configuration
+    with open(outdir / "wsmi_summary.json", "w", encoding="utf-8") as f:  # open JSON file
+        json.dump(summary, f, indent=2)  # dump JSON
 
-    # Save a run configuration snapshot for full reproducibility
-    run_config = {  # capture the exact inputs and choices used
+    # Run-config snapshot (provenance)
+    run_config = {  # provenance metadata
         "wsmi_npz": str(npz_path.resolve()),
         "output_dir": str(outdir.resolve()),
         "strategy": args.strategy,
@@ -103,13 +109,13 @@ def main() -> None:
         "band": args.band,
         "library_notes": {
             "numpy": "Also used by C&K, Engemann, Della Bella",
-            "pandas": "Common in C&K/Engemann-style analysis stacks for tabular outputs",
+            "pandas": "Common in MNE-style analysis stacks",
             "scipy": "Used inside eeg.wsmi.aggregation for trimmed mean",
         },
     }
-    with open(outdir / "run_config.json", "w", encoding="utf-8") as f:  # create config snapshot file
-        json.dump(run_config, f, indent=2)  # write human-readable JSON for later auditing
+    with open(outdir / "run_config.json", "w", encoding="utf-8") as f:  # open run_config file
+        json.dump(run_config, f, indent=2)  # write run_config
 
 
-if __name__ == "__main__":  # standard script entry point
-    main()  # run the CLI
+if __name__ == "__main__":  # script entry point
+    main()  # run CLI

@@ -110,11 +110,6 @@ def main() -> None:
         "save_symbols": bool(args.save_symbols),
         "n_epochs": int(n_epochs),
         "n_channels": int(n_channels),
-        "library_notes": {
-            "numpy": "Also used by C&K, Engemann, Della Bella",
-            "mne": "Also used by C&K, Engemann, Della Bella",
-            "tqdm": "Additional helper for progress; improves UX on long runs",
-        },
     }
     with open(outdir / "run_config.json", "w", encoding="utf-8") as f:  # open a JSON file for writing config
         json.dump(run_config, f, indent=2)  # write configuration snapshot with indentation

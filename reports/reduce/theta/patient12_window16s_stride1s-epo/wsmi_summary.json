@@ -1,0 +1,10 @@
+{
+  "subject_id": "patient12_window16s_stride1s-epo",
+  "band": "theta",
+  "strategy": "median-trim",
+  "include_diagonal": false,
+  "trim_proportion": 0.1,
+  "subject_scalar": -0.003040636104247028,
+  "n_epochs": 5500,
+  "n_channels": 19
+}

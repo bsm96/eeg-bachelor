@@ -1,0 +1,18 @@
+{
+  "epochs_path": "\\\\regionh.top.local\\dfs\\Logget\\AuditData\\CONNECT-ME\\Bjoern\\eeg-bachelor\\data\\epochs\\window16s_stride1s\\patient11_window16s_stride1s-epo.fif",
+  "output_dir": "\\\\regionh.top.local\\dfs\\Logget\\AuditData\\CONNECT-ME\\Bjoern\\eeg-bachelor\\reports\\wsmi\\theta\\patient11_window16s_stride1s-epo",
+  "sfreq": 250.0,
+  "l_freq": 4.0,
+  "h_freq": 7.0,
+  "use_notch": false,
+  "notch_freqs": null,
+  "k": 3,
+  "tau": 8,
+  "tie_break": "jitter",
+  "normalize": true,
+  "skip_filter": false,
+  "picks": "eeg",
+  "save_symbols": false,
+  "n_epochs": 4836,
+  "n_channels": 19
+}

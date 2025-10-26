@@ -1,0 +1,16 @@
+{
+  "wsmi_npz": "\\\\regionh.top.local\\dfs\\Logget\\AuditData\\CONNECT-ME\\Bjoern\\eeg-bachelor\\reports\\wsmi\\delta\\patient12_window16s_stride1s-epo\\wsmi_matrices.npz",
+  "output_dir": "\\\\regionh.top.local\\dfs\\Logget\\AuditData\\CONNECT-ME\\Bjoern\\eeg-bachelor\\reports\\reduce\\delta\\patient12_window16s_stride1s-epo",
+  "strategy": "median-trim",
+  "resolved_pair_reducer": "median",
+  "resolved_time_reducer": "trimmed",
+  "resolved_trim_proportion": 0.1,
+  "include_diagonal": false,
+  "subject_id": "patient12_window16s_stride1s-epo",
+  "band": "delta",
+  "library_notes": {
+    "numpy": "Also used by C&K, Engemann, Della Bella",
+    "pandas": "Common in MNE-style analysis stacks",
+    "scipy": "Used inside eeg.wsmi.aggregation for trimmed mean"
+  }
+}
