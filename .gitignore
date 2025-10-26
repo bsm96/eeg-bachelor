@@ -5,6 +5,10 @@
 # Ignore the root-level folder named "EDF filer" (contains >4GB of EDF files)
 /EDF filer/
 
+# Reports
+/reports/reduce/
+/reports/wsmi/
+
 # VS Code
 .vscode/
 
