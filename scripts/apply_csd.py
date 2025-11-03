@@ -81,6 +81,9 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
                    help="Overwrite existing outputs")
     p.add_argument("--dry-run", action="store_true",
                    help="Don't write outputs; just print what would happen")
+    p.add_argument("--assume-csd", action="store_true",
+                help="Inputs are already CSD; bypass NICE's internal CSD step")
+
     args = p.parse_args(argv)
 
     if args.glob is None:
