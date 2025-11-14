@@ -161,10 +161,16 @@ def state_entropies_from_hist(X, labels, K, bins=50):
     return H
 
 def centroid_entropy_from_medoid(v):
-    """Alternative H_i from one medoid vector (kept for completeness)."""
     x = v.astype(float)
-    x = x - x.min() + 1e-12                                 # nonnegative + epsilon
-    return float(entropy(x / x.sum()))
+    P = x.size
+    vmin, vmax = float(x.min()), float(x.max())
+    if vmin == vmax:
+        vmax = vmin + 1e-6
+    bins = int(np.sqrt(P))
+    hist, _ = np.histogram(x, bins=bins, range=(vmin, vmax))
+    p = hist.astype(float)
+    return 0.0 if p.sum() == 0 else float(entropy(p / p.sum()))
+
 
 def compute_features(subjects, cond_code, labels, medoids, X, mode, bins):
     """Aggregate per subject×condition: p_i, WE, H(p); return table + H_i."""
@@ -208,8 +214,8 @@ def main():
     ap.add_argument("--stack", required=True, type=str, help="Stack .npz (expects X, y_cond/event_labels_all, conditions).")
     ap.add_argument("--medoids", required=True, type=str, help="Medoids .npy from learn_brain_states.py.")
     ap.add_argument("--out-dir", required=True, type=str, help="Output directory.")
-    ap.add_argument("--entropy-mode", choices=["state-hist", "medoid"], default="state-hist",
-                    help="How to compute H_i (default: pooled windows histogram).")
+    ap.add_argument("--entropy-mode", choices=["state-hist", "medoid"], default="medoid",
+                    help="How to compute H_i (default: medoid/centroid entropy).")
     ap.add_argument("--hist-bins", type=int, default=50, help="Histogram bins for state-hist.")
     ap.add_argument("--cond-map", type=str, default="",
                     help='Optional code→name map, e.g. "0=Resting,1=Familiar voice,2=Medical staff".')

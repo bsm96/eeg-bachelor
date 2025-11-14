@@ -13,7 +13,6 @@ The script mirrors key preprocessing choices used in prior work:
 - Optional removal of spans annotated as bad (e.g., 'BAD_')
 
 Notes:
-- Comments are written in professional English and avoid first-person pronouns.
 - Default event window reflects prior usage (tmin=-0.2, tmax=15.0).
 """
 from __future__ import annotations
@@ -79,6 +78,7 @@ def _filter_resample(
     notch: Optional[Iterable[float]],
     sfreq: Optional[float],
     picks: str | list | None,
+    n_jobs: int = 1, # number of parallel jobs; recommended to be -2 to leave one core free for system use etc.
 ) -> mne.io.BaseRaw:
     """Apply optional notch, band-pass, and resampling in a stable order.
 
@@ -92,11 +92,11 @@ def _filter_resample(
 
     r = raw.copy().load_data()
     if notch:
-        r = r.notch_filter(freqs=list(notch), picks=picks, verbose="ERROR")
+        r = r.notch_filter(freqs=list(notch), picks=picks, n_jobs=n_jobs, verbose="ERROR")
     if l_freq is not None or h_freq is not None:
-        r = r.filter(l_freq=l_freq, h_freq=h_freq, picks=picks, verbose="ERROR")
+        r = r.filter(l_freq=l_freq, h_freq=h_freq, picks=picks, n_jobs=n_jobs, verbose="ERROR")
     if sfreq is not None and r.info.get("sfreq") and r.info["sfreq"] != sfreq:
-        r = r.resample(sfreq=sfreq)
+        r = r.resample(sfreq=sfreq, n_jobs=n_jobs)
     return r
 
 
@@ -304,6 +304,9 @@ def parse_args() -> argparse.Namespace:
     ap.add_argument("--start-offset", type=float, default=0.0, help="Crop start (s) before sliding windowing.")
     ap.add_argument("--stop-offset", type=float, default=None, help="Crop stop (s) before sliding windowing.")
 
+    # Performance
+    ap.add_argument("--n-jobs", type=int, default=1, help="Number of parallel jobs (1=sequential, -1=all cores, -2=all but one core).")
+
     return ap.parse_args()
 
 
@@ -356,6 +359,7 @@ def main() -> None:
             notch=notch,
             sfreq=float(args.sfreq) if args.sfreq else None,
             picks=args.picks,
+            n_jobs=args.n_jobs,
         )
 
         # Remove explicitly bad-annotated spans if requested
@@ -367,8 +371,8 @@ def main() -> None:
                 # Determine used tmin/tmax and whether user set them explicitly
                 user_set_tmin = args.tmin is not None
                 user_set_tmax = args.tmax is not None
-                used_tmin = float(args.tmin) if user_set_tmin else -0.2
-                used_tmax = float(args.tmax) if user_set_tmax else 15.0
+                used_tmin = float(args.tmin) if user_set_tmin else -0.2 # C&K default
+                used_tmax = float(args.tmax) if user_set_tmax else 15.0 # C&K default
 
                 events = None if args.events is None else [x.strip() for x in args.events.split(",") if x.strip()]
                 epochs = build_event_epochs(
