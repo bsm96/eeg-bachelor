@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Iterable, List, Optional
 
 import mne
+import numpy as np
 from tqdm import tqdm
 import re
 
@@ -233,7 +234,11 @@ def build_sliding_epochs(
     stop_offset: Optional[float],
     picks: str | list | None,
 ) -> mne.Epochs:
-    """Create fixed-length overlapping epochs across continuous data using a sliding window."""
+    """Create fixed-length overlapping epochs across continuous data using a sliding window.
+    
+    Each epoch is assigned a condition label based on which annotation (if any) covers
+    the epoch's center time. If no annotation is present, the default label is "Other".
+    """
     duration = window
     overlap = max(0.0, window - stride)
 
@@ -253,6 +258,7 @@ def build_sliding_epochs(
             # Fall back silently if picking fails; better to raise later with a clear message
             pass
 
+    # Create fixed-length sliding window epochs
     epochs = mne.make_fixed_length_epochs(
         r2,
         duration=duration,
@@ -260,6 +266,54 @@ def build_sliding_epochs(
         preload=True,
         verbose="ERROR",
     )
+    
+    # Assign condition labels based on annotation coverage of each epoch's center time
+    # Extract sampling frequency for time conversions
+    sfreq = r2.info["sfreq"]
+    
+    # Compute start time and center time for each epoch
+    # epochs.events[:, 0] contains the sample index of each epoch start
+    t_start = epochs.events[:, 0] / sfreq
+    t_center = t_start + window / 2.0
+    
+    # Retrieve annotations from the cropped raw object
+    ann = r2.annotations
+    
+    # Initialize label list with default "Other" for all epochs
+    labels = ["Other"] * len(epochs)
+    
+    # If annotations exist, check which annotation covers each epoch center
+    if ann is not None and len(ann) > 0:
+        # Convert annotation attributes to numpy arrays for efficient operations
+        ann_onset = np.asarray(ann.onset, dtype=float)
+        ann_dur = np.asarray(ann.duration, dtype=float)
+        ann_desc = np.asarray(ann.description, dtype=object)
+        
+        # For each epoch, determine which annotation (if any) covers its center time
+        for i, t_c in enumerate(t_center):
+            # Check if center time falls within any annotation interval
+            mask = (t_c >= ann_onset) & (t_c < ann_onset + ann_dur)
+            
+            # If at least one annotation covers this center time, use its description
+            if np.any(mask):
+                # Find the first matching annotation index
+                idx = np.where(mask)[0][0]
+                labels[i] = ann_desc[idx]
+    
+    # Build event_id mapping from unique labels to integer codes (starting from 1)
+    # Preserve first-seen order for stable output
+    unique_labels = list(dict.fromkeys(labels))
+    event_id = {label: code for code, label in enumerate(unique_labels, start=1)}
+    
+    # Create new events array with condition codes in the third column
+    events = epochs.events.copy()
+    for i, label in enumerate(labels):
+        events[i, 2] = event_id[label]
+    
+    # Attach the new events and event_id to the epochs object
+    epochs.events = events
+    epochs.event_id = event_id
+    
     return epochs
 
 

@@ -19,6 +19,7 @@ python scripts/01_make_epochs.py `
   --overwrite
 ```
 
+
 ### Sliding window epochs (16 s window, 1 s stride)
 ```bash
 python scripts/01_make_epochs.py `
@@ -30,6 +31,10 @@ python scripts/01_make_epochs.py `
   --n-jobs -2 `
   --overwrite
 ```
+
+python scripts\01_make_epochs.py --mode sliding --window 16.0 --stride 1.0 --input-dir "data\CK\raws_missing" --glob "*.fif" --sfreq 125 --n-jobs 1 --overwrite
+python scripts\01_make_epochs.py --mode sliding --window 16.0 --stride 1.0 --input-dir "data\CK\Raws_new_ica" --glob "*.fif" --sfreq 125 --n-jobs 1 --overwrite
+python scripts\01_make_epochs.py --mode sliding --window 16.0 --stride 1.0 --input-dir "data\CK\used_raws" --glob "*.fif" --sfreq 125 --n-jobs 1 --overwrite
 
 ## Key Arguments
 
