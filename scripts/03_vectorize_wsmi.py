@@ -4,7 +4,7 @@ Vectorize wSMI matrices to per-epoch feature matrices.
 Purpose
 -------
 Converts per-epoch wSMI connectivity cubes (E, C, C) into 2D feature matrices
-of shape (E, P), where P is the number of unique channel pairs P = C*(C-1)/2.
+of shape (E, P), where P is the number of unique channel pairs P = C*(C-1)/2. (note, C is the number of channels, the raport uses M)
 The upper triangle (excluding the diagonal) is used as the feature vector order.
 
 Outputs per recording an "*_vec.npz" file with keys:
@@ -31,7 +31,7 @@ python scripts/vectorize_wsmi.py \
 
 # vectorize_wsmi.py
 # Input: dine .npz (E, C, C). (epochs, channels, channels)
-# Output: pr. recording en X med rækker = epoker og kolonner = upper-triangle (k=1) af wSMI-matrixen (dvs. feature-vector 𝑓 pr. epoke) + en “pairs.json” med (ch_i, ch_j) → kolonneindeks.
+# Output: pr. recording en X med rækker = epoker og kolonner = upper-triangle (k=1) af wSMI-matrixen (dvs. feature-vector f pr. epoke) + en “pairs.json” med (ch_i, ch_j) -> kolonneindeks
 # Tip: i,j = np.triu_indices(C, k=1) og f = W[i, j].
 
 from __future__ import annotations  # Postponed evaluation of type annotations for forward references
@@ -96,7 +96,7 @@ def _safe_to_list(x) -> Optional[List[str]]:
 		if isinstance(x, np.ndarray):
 			# Object arrays often wrap lists or strings; normalize to a Python list
 			if x.dtype == object:
-				# Single scalar object → extract, single list in a 1D array → unwrap
+				# Single scalar object -> extract, single list in a 1D array -> unwrap
 				if x.ndim == 0:
 					x = [x.item()]  # Convert 0-dim object array to a list
 				elif x.ndim == 1 and len(x) == 1 and isinstance(x[0], (list, tuple, np.ndarray)):
@@ -104,13 +104,13 @@ def _safe_to_list(x) -> Optional[List[str]]:
 				else:
 					x = x.tolist()  # Fallback: convert to Python list
 			elif x.dtype.kind in {"U", "S"}:
-				x = x.tolist()  # Unicode/bytes arrays → list
+				x = x.tolist()  # Unicode/bytes arrays -> list
 			else:
 				# Not strings; stringify elements
 				x = [str(v) for v in x.tolist()]
 			return _safe_to_list(x)  # Recurse with a now-Python list
 	except Exception:
-		return None  # Any failure → treat as unavailable
+		return None  # Any failure -> treat as unavailable
 	return None  # If none of the branches applied
 
 
@@ -259,7 +259,7 @@ def validate_ch_names(ref: Optional[Sequence[str]], current: Optional[Sequence[s
 		)
 	for i, (r, c) in enumerate(zip(ref, current)):
 		if str(r) != str(c):
-			# Names differ at specific index → fail with explicit message
+			# Names differ at specific index -> fail with explicit message
 			raise ValueError(
 				f"Channel name mismatch at position {i}: ref='{r}' current='{c}' in '{file_path}'"
 			)

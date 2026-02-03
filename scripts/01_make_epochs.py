@@ -36,7 +36,7 @@ def _ensure_dir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
 
 
-def _maybe_rename_edf_channels(raw: mne.io.BaseRaw, *, apply: bool) -> None:
+def _maybe_rename_edf_channels(raw: mne.io.BaseRaw, *, apply: bool) -> None: # This function updates the channel names in MNE-raw
     """Optionally normalize EDF channel names by removing 'EEG ' prefix and '-REF' suffix.
 
     This mirrors typical EDF imports encountered in similar pipelines and helps standardize names
@@ -79,7 +79,7 @@ def _filter_resample(
     notch: Optional[Iterable[float]],
     sfreq: Optional[float],
     picks: str | list | None,
-    n_jobs: int = 1, # number of parallel jobs; recommended to be -2 to leave one core free for system use etc.
+    n_jobs: int = -2, # number of parallel jobs; recommended to be -2 to leave one core free for system use etc.
 ) -> mne.io.BaseRaw:
     """Apply optional notch, band-pass, and resampling in a stable order.
 
@@ -128,7 +128,7 @@ def _reject_bad_spans(raw: mne.io.BaseRaw, *, annot_name: Optional[str]) -> mne.
         segments.append(raw.copy().crop(tmin=t))
 
     if not segments:
-        return raw.copy().crop(tmin=0.0, tmax=0.0)  # return an empty Raw if everything was rejected
+        return raw.copy().crop(tmin=0.0, tmax=0.0)  # Return an empty Raw if everything was rejected
 
     return mne.concatenate_raws(segments, verbose=False)
 
@@ -364,7 +364,7 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
-def _parse_notch(s: Optional[str]) -> Optional[List[float]]:
+def _parse_notch(s: Optional[str]) -> Optional[List[float]]: # _parse_notch takes a comma-separated string like "50,100" and converts it into a list of floats like [50.0, 100.0]
     if not s:
         return None
     parts = [p.strip() for p in s.split(",") if p.strip()]

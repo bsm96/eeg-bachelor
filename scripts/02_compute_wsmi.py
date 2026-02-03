@@ -94,7 +94,7 @@ def main():
                 mask = np.isin(epochs.events[:, 2], np.array(wanted_codes, dtype=int))
                 epochs = epochs[mask]
             else:
-                # No matching labels found in this file → produce zero epochs
+                # No matching labels found in this file -> produce zero epochs
                 epochs = epochs[[]]
             E_after = len(epochs)
             if E_after == 0:

@@ -1,61 +1,52 @@
 # eeg-bachelor
 
-<a target="_blank" href="https://cookiecutter-data-science.drivendata.org/">
-    <img src="https://img.shields.io/badge/CCDS-Project%20template-328F97?logo=cookiecutter" />
-</a>
+Small EEG analysis project for my bachelor thesis. The code is mainly a set of scripts + notebooks built around MNE.
 
-EEG/ML analysis with MNE
+Note: Because Rigshospitalet complained about some Python versions on their systems because of security measures, I ended up having to use multiple Python versions and run parts of the code in a different way. This also caused some compatibility issues.
 
-## Project Organization
+My recommendation is: run the code and install packages as you go, whenever you discover that something is missing.
 
-```
-├── LICENSE            <- Open-source license if one is chosen
-├── Makefile           <- Makefile with convenience commands like `make data` or `make train`
-├── README.md          <- The top-level README for developers using this project.
-├── data
-│   ├── external       <- Data from third party sources.
-│   ├── interim        <- Intermediate data that has been transformed.
-│   ├── processed      <- The final, canonical data sets for modeling.
-│   └── raw            <- The original, immutable data dump.
-│
-├── docs               <- A default mkdocs project; see www.mkdocs.org for details
-│
-├── models             <- Trained and serialized models, model predictions, or model summaries
-│
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`.
-│
-├── pyproject.toml     <- Project configuration file with package metadata for 
-│                         eeg and configuration for tools like black
-│
-├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-│
-├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
-│
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
-├── setup.cfg          <- Configuration file for flake8
-│
-└── eeg   <- Source code for use in this project.
-    │
-    ├── __init__.py             <- Makes eeg a Python module
-    │
-    ├── config.py               <- Store useful variables and configuration
-    │
-    ├── dataset.py              <- Scripts to download or generate data
-    │
-    ├── features.py             <- Code to create features for modeling
-    │
-    ├── modeling                
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
-    │
-    └── plots.py                <- Code to create visualizations
+Run the scripts in numerical order.
+
+## What is in this repo
+
+- Scripts for preprocessing and feature generation: [scripts/](scripts/)
+- Analysis notebooks: [notebooks/](notebooks/)
+- Short script-specific notes: [docs/](docs/)
+- Configs: [configs/](configs/)
+- Figures/exports: [plots/](plots/)
+
+## Setup
+
+I use conda with the environment in [environment.yml](environment.yml):
+
+```bash
+conda env create -f environment.yml
+conda activate eeg_env
 ```
 
---------
+## Typical workflow
+
+1) Create epochs (events or sliding windows):
+
+```bash
+python scripts/01_make_epochs.py --help
+```
+
+2) Compute connectivity/features and build datasets:
+
+```bash
+python scripts/02_compute_wsmi.py --help
+python scripts/03_vectorize_wsmi.py --help
+python scripts/04_stack_dataset.py --help
+```
+
+3) Learn/assign brain states:
+
+```bash
+python scripts/05_learn_brain_states.py --help
+python scripts/06_assign_states_and_we.py --help
+```
+
+More details for individual steps are in the docs folder (for example: [docs/readme_01_make_epochs.md](docs/readme_01_make_epochs.md)).
 

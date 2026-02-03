@@ -5,11 +5,11 @@ Example:
 	python scripts/stack_dataset.py --input-dir <vec_dir> --out-file <out_path>
 """
 
-# Saml alle recordings til et fælles datasæt:
-# - X (alle epoker på tværs af personer),
-# - y_cond (betingelse/condition pr. epoke: fx Familiar/Unfamiliar/Rest), groups (subject-ID pr. epoke til LOSO),
-# - evt. run_id/file_id.
-#   Gem som .npz.
+# Collect all recordings into a common dataset:
+# - X (all epochs across subjects),
+# - y_cond (condition per epoch: e.g. Familiar/Unfamiliar/Rest), groups (subject ID per epoch for LOSO),
+# - eventually run_id/file_id.
+#   Save as .npz
 
 from __future__ import annotations  # Allow forward refs in type annotations
 

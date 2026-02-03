@@ -12,7 +12,7 @@ Design choices
   under the hood, so the prototypes are true L1-centers but exposed as "k-means"
   prototypes for downstream code.
 - Elbow selection of k via Kneedle (auto) or manual selection (select) or fixed k.
-- Balanced subsampling by subject×condition to avoid domination by frequent conditions.
+- Balanced subsampling by subject*condition to avoid domination by frequent conditions.
 - Saves prototypes (centroids/medoids), fitted model, metadata, and an elbow plot.
 
 Example:
@@ -68,9 +68,9 @@ from joblib import Parallel, delayed               # Parallel restarts
 from kneed import KneeLocator                      # Kneedle elbow detection
 
 
-# ----------------------------------------------------------------------
+# -------------------------
 # Utilities to load the stacked dataset
-# ----------------------------------------------------------------------
+# -------------------------
 
 def _get(arr, keys, default=None):
     """Return the first existing key from a loaded .npz dict-like object."""
@@ -144,9 +144,9 @@ def balanced_cap_indices(pairs, cap, random_state):
     return np.sort(idx_keep)                # sort for reproducibility
 
 
-# ----------------------------------------------------------------------
+# -------------------------
 # K-medians helper (used for k-means + Manhattan)
-# ----------------------------------------------------------------------
+# -------------------------
 
 class _KMediansModel:
     """Minimal model wrapper to mimic sklearn's KMeans attributes.
@@ -215,9 +215,9 @@ def _run_kmedians(X, k, seed=0, max_iter=300):
     return _KMediansModel(centers=centers, labels=labels, inertia=inertia, random_state=seed)
 
 
-# ----------------------------------------------------------------------
+# -------------------------
 # Core model fitting and inertia curve
-# ----------------------------------------------------------------------
+# -------------------------
 
 def fit_best_model(X, k, n_init, random_state, n_jobs, algo="kmeans", metric="manhattan"):
     """Run multiple restarts and keep the model with lowest inertia.
@@ -377,9 +377,9 @@ def save_elbow_plot(path, ks, ws, k_star, algo, metric):
     plt.close()
 
 
-# ----------------------------------------------------------------------
+# -------------------------
 # CLI
-# ----------------------------------------------------------------------
+# -------------------------
 
 def main():
     """Command-line entry point for learning wSMI-based brain states."""
@@ -450,9 +450,9 @@ def main():
 
     os.makedirs(args.out_dir, exist_ok=True)  # ensure output directory exists
 
-    # ------------------------------------------------------------------
+    # -------------------------
     # Load dataset and select balanced training subset
-    # ------------------------------------------------------------------
+    # -------------------------
     print(f"[load] stack: {args.stack}")
     X_all, subjects, conditions = load_stack(args.stack)
     print(f"[load] X_all shape: {X_all.shape}, N={X_all.shape[0]}, P={X_all.shape[1]}")
@@ -465,9 +465,9 @@ def main():
         f"(cap-per-subject-per-cond={args.cap_per_subject_per_cond})"
     )
 
-    # ------------------------------------------------------------------
+    # -------------------------
     # Inertia curve and elbow selection
-    # ------------------------------------------------------------------
+    # -------------------------
     k_min, k_max = map(int, args.k_range)
     ks, ws, algo_used_for_sweep = inertia_curve(
         X_tr,
@@ -502,9 +502,9 @@ def main():
         save_elbow_plot(plot_path, ks, ws, k_star, algo=algo_used_for_sweep, metric=args.metric)
         print(f"[elbow] Using user-specified k={k_star}. Plot saved → {plot_path}")
 
-    # ------------------------------------------------------------------
+    # -------------------------
     # Final fit at chosen k on the same training subset
-    # ------------------------------------------------------------------
+    # -------------------------
     best_model, best_inertia, algo_used_final = fit_best_model(
         X_tr,
         k_star,
@@ -515,12 +515,12 @@ def main():
         metric=args.metric,
     )
 
-    # Note: When requesting K-Means with Manhattan, a k-medians (L1) solver is
-    # used internally. This is encoded via algo_used_final == "kmeans_l1".
+    # Note: When requesting K-Means with Manhattan, a k-medians (L1) solver is used internally.
+    #  - this is encoded via algo_used_final == "kmeans_l1".
 
-    # ------------------------------------------------------------------
+    # -------------------------
     # Save prototypes and model depending on algorithm
-    # ------------------------------------------------------------------
+    # -------------------------
     if algo_used_final in ("kmeans", "kmeans_l1"):
         # Centroids from KMeans or centers from k-medians
         prototypes = best_model.cluster_centers_          # shape (k, P)
@@ -580,9 +580,9 @@ def main():
             )
         }
 
-    # ------------------------------------------------------------------
+    # -------------------------
     # Metadata for reproducibility
-    # ------------------------------------------------------------------
+    # -------------------------
     meta = {
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "stack": os.path.abspath(args.stack),

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Assign each window to the nearest K-Medoids state (Manhattan) and compute:
-- Occupancy p_i per subject×condition
+- Occupancy p_i per subject*condition
 - State entropies H_i (pooled windows histogram by default)
 - WE = sum_i p_i * H_i
 - Occupancy entropy H(p) and normalized H(p)
@@ -20,7 +20,9 @@ import pandas as pd
 from sklearn.metrics import pairwise_distances
 from scipy.stats import entropy
 
-# ---------------- small helpers ----------------
+# -------------------------
+# small helpers
+# -------------------------
 
 def is_numeric_vector(x, n=None):
     """Return True if x is a 1D numeric array (optionally with length n)."""
@@ -91,7 +93,9 @@ def parse_cond_map(s):
         mapping[int(left.strip())] = right.strip()
     return mapping
 
-# ---------------- condition-name logic ----------------
+# -------------------------
+# condition-name logic
+# -------------------------
 
 def derive_condition_names(cond_codes, event_labels, cond_name_list, cond_map):
     """
@@ -100,9 +104,9 @@ def derive_condition_names(cond_codes, event_labels, cond_name_list, cond_map):
       - cond_name: human-readable name
     Priority:
       1) explicit --cond-map if codes are available
-      2) per-window names (event_labels_all) → factorize to codes
-      3) numeric codes + a global name list (map sorted unique codes → names)
-      4) numeric codes only → synthesize names 'cond_<code>'
+      2) per-window names (event_labels_all) -> factorize to codes
+      3) numeric codes + a global name list (map sorted unique codes -> names)
+      4) numeric codes only -> synthesize names 'cond_<code>'
     """
     # 1) explicit mapping wins when codes exist
     if cond_map and cond_codes is not None:
@@ -110,7 +114,7 @@ def derive_condition_names(cond_codes, event_labels, cond_name_list, cond_map):
         names = pd.Series(codes).map(lambda x: cond_map.get(int(x), f"cond_{int(x)}")).to_numpy()
         return codes, names.astype(object)
 
-    # 2) per-window string labels present → use names directly, factorize to codes
+    # 2) per-window string labels present -> use names directly, factorize to codes
     if event_labels is not None:
         name_series = pd.Series(event_labels).astype("object")
         codes, _ = pd.factorize(name_series, sort=True)  # stable order by label
@@ -126,18 +130,20 @@ def derive_condition_names(cond_codes, event_labels, cond_name_list, cond_map):
             names = pd.Series(codes).map(mapping).astype("object").to_numpy()
             return codes, names
 
-    # 4) numeric only → give synthetic names
+    # 4) numeric only -> give synthetic names
     if cond_codes is not None:
         codes = np.asarray(cond_codes).astype(int)
         names = pd.Series(codes).map(lambda x: f"cond_{int(x)}").astype("object").to_numpy()
         return codes, names
 
-    # Fallback: all else fails → single condition
+    # Fallback: all else fails -> single condition
     codes = np.zeros(len(event_labels) if event_labels is not None else 1, dtype=int)
     names = np.array(["cond_0"], dtype=object).repeat(codes.shape[0])
     return codes, names
 
-# ---------------- core computations ----------------
+# -------------------------
+# core computations
+# -------------------------
 
 def assign_states(X, medoids):
     """Assign each row of X to the nearest medoid using Manhattan distance."""
@@ -177,7 +183,7 @@ def compute_features(subjects, cond_code, labels, medoids, X, mode, bins):
     K = medoids.shape[0]
     df = pd.DataFrame({"subject": subjects, "condition": cond_code, "state": labels})
 
-    # Counts per subject×condition×state
+    # Counts per subject*condition*state
     counts = (
         df.groupby(["subject", "condition", "state"])
           .size().unstack(fill_value=0).reindex(columns=range(K), fill_value=0)
@@ -207,7 +213,7 @@ def compute_features(subjects, cond_code, labels, medoids, X, mode, bins):
     res = res.reset_index()
     return res, H_vec
 
-# ---------------- CLI ----------------
+# ------------------------- CLI -------------------------
 
 def main():
     ap = argparse.ArgumentParser(description="Assign states and compute occupancy/WE/H(p) with robust condition names.")
@@ -218,7 +224,7 @@ def main():
                     help="How to compute H_i (default: medoid/centroid entropy).")
     ap.add_argument("--hist-bins", type=int, default=50, help="Histogram bins for state-hist.")
     ap.add_argument("--cond-map", type=str, default="",
-                    help='Optional code→name map, e.g. "0=Resting,1=Familiar voice,2=Medical staff".')
+                    help='Optional code->name map, e.g. "0=Resting,1=Familiar voice,2=Medical staff".')
     args = ap.parse_args()
 
     os.makedirs(args.out_dir, exist_ok=True)
@@ -240,7 +246,7 @@ def main():
         medoids=medoids, X=X, mode=args.entropy_mode, bins=args.hist_bins,
     )
 
-    # Add readable names at aggregated level via code→name mapping
+    # Add readable names at aggregated level via code->name mapping
     pairs = pd.DataFrame({"code": cond_code, "name": cond_name}).drop_duplicates()
     code2name = dict(zip(pairs["code"].astype(int), pairs["name"].astype(str)))
     feat_df["condition_name"] = feat_df["condition"].map(code2name)
