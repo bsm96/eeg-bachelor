@@ -1,4 +1,4 @@
-# eeg-bachelor
+### eeg-bachelor
 
 Small EEG analysis project for my bachelor thesis. The code is mainly a set of scripts + notebooks built around MNE.
 
@@ -49,4 +49,3 @@ python scripts/06_assign_states_and_we.py --help
 ```
 
 More details for individual steps are in the docs folder (for example: [docs/readme_01_make_epochs.md](docs/readme_01_make_epochs.md)).
-
